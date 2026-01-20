@@ -9,6 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
 # Install Python and build dependencies for model conversion
+# libxcb1 is required by opencv-python during ultralytics model conversion
 RUN apt-get update && \
     apt-get install -y \
         python3 \
@@ -19,6 +20,7 @@ RUN apt-get update && \
         g++ \
         libgl1 \
         libglib2.0-0 \
+        libxcb1 \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

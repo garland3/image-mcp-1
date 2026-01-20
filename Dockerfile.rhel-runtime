@@ -14,6 +14,7 @@ WORKDIR /app
 RUN groupadd -r mcpuser && useradd -r -g mcpuser mcpuser
 
 # Install Python and dependencies
+# libxcb is required by opencv-python during model conversion
 RUN dnf install -y --allowerasing \
         python3.11 \
         python3.11-pip \
@@ -23,6 +24,7 @@ RUN dnf install -y --allowerasing \
         curl \
         mesa-libGL \
         glib2 \
+        libxcb \
     && dnf clean all && \
     rm -rf /var/cache/dnf
 

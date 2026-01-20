@@ -115,7 +115,18 @@ if [ "$BUILD_ALL" = true ]; then
     BUILD_RHEL_RUNTIME=true
 fi
 
-log_info "Starting Docker image builds..."
+# Detect container runtime (docker or podman)
+if command -v docker &> /dev/null; then
+    CONTAINER_CMD="docker"
+elif command -v podman &> /dev/null; then
+    CONTAINER_CMD="podman"
+else
+    log_error "Neither docker nor podman found. Please install a container runtime."
+    exit 1
+fi
+
+log_info "Using container runtime: $CONTAINER_CMD"
+log_info "Starting container image builds..."
 echo ""
 
 # Track build results
@@ -132,7 +143,7 @@ build_image() {
     log_info "  Tag: openvino-detection:$tag"
     echo ""
 
-    if docker build $NO_CACHE -f "$dockerfile" -t "openvino-detection:$tag" .; then
+    if $CONTAINER_CMD build $NO_CACHE -f "$dockerfile" -t "openvino-detection:$tag" .; then
         log_success "Built openvino-detection:$tag"
         SUCCESSFUL_BUILDS+=("openvino-detection:$tag")
     else

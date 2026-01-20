@@ -5,3 +5,5 @@ ultralytics>=8.3.0
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch>=2.0.0
 torchvision>=0.15.0
+# OpenVINO is required for ultralytics to export models to OpenVINO format
+openvino>=2024.0.0

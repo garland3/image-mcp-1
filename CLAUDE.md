@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Environment Notes
+
+- **Container Runtime**: This machine has `podman` available (Docker-compatible CLI)
+
 ## Container Build Testing
 
 **IMPORTANT**: When testing or verifying Docker container builds, use the `container-builder` agent via the Task tool instead of running docker build commands directly. This agent runs `create_containers.sh` and provides concise feedback on build success/failure.
@@ -46,8 +50,11 @@ python convert_models.py
 # Inference testing (after containers are running)
 ./test_inference.sh                         # Quick bash-based test
 ./test_inference.sh 8080                    # Test on custom port
-python test_inference.py                    # Detailed Python test
+python test_inference.py                    # Test with test.png, output to test_output.png
+python test_inference.py --suffix ubuntu    # Output to test_output_ubuntu.png
+python test_inference.py --suffix rhel      # Output to test_output_rhel.png
 python test_inference.py --verbose          # With debug output
+python test_inference.py --image foo.jpg -o result.png  # Custom input/output
 ```
 
 ## Architecture
@@ -103,4 +110,9 @@ The runtime variants convert models on first startup and cache them in `/app/mod
 ## Dependencies
 
 - **Runtime** (`requirements.txt`): openvino, opencv-python-headless, numpy, Pillow, fastmcp
-- **Build-time** (`requirements-build.txt`): ultralytics, torch, torchvision (only for model conversion)
+- **Build-time** (`requirements-build.txt`): ultralytics, torch, torchvision, openvino (for model conversion)
+
+## Test Files
+
+- **test.png**: Default test image for inference testing
+- **test_output*.png**: Generated output images with detection overlays (gitignored)

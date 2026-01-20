@@ -152,28 +152,61 @@ The models detect 80 COCO classes including:
 
 ## Docker Deployment
 
-Example Dockerfile:
+Four container variants are available:
 
-```dockerfile
-FROM python:3.11-slim
+| Variant | Base Image | Model Conversion | Startup Time | Image Size |
+|---------|------------|------------------|--------------|------------|
+| `ubuntu` | Ubuntu 24.04 | Build-time | ~2s | Smaller |
+| `rhel` | RHEL UBI 9 | Build-time | ~2s | Smaller |
+| `ubuntu-runtime` | Ubuntu 24.04 | First startup | ~40s | Larger |
+| `rhel-runtime` | RHEL UBI 9 | First startup | ~40s | Larger |
 
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY main.py .
-
-EXPOSE 8006
-
-CMD ["python", "main.py", "--host", "0.0.0.0", "--port", "8006"]
-```
-
-Build and run:
+### Build All Containers
 
 ```bash
-docker build -t openvino-detection .
-docker run -p 8006:8006 openvino-detection
+# Build all 4 variants (supports both docker and podman)
+./create_containers.sh
+
+# Build specific variants
+./create_containers.sh --ubuntu          # Ubuntu pre-converted only
+./create_containers.sh --rhel            # RHEL pre-converted only
+./create_containers.sh --ubuntu-runtime  # Ubuntu runtime only
+./create_containers.sh --rhel-runtime    # RHEL runtime only
+
+# Build without cache
+./create_containers.sh --no-cache
 ```
+
+### Run Containers
+
+```bash
+# Pre-converted variants (faster startup, recommended)
+docker run -d -p 8006:8006 openvino-detection:ubuntu
+docker run -d -p 8006:8006 openvino-detection:rhel
+
+# Runtime variants (convert models on first startup, needs volume for caching)
+docker run -d -p 8006:8006 -v openvino-models:/app/models openvino-detection:ubuntu-runtime
+docker run -d -p 8006:8006 -v openvino-models:/app/models openvino-detection:rhel-runtime
+```
+
+### Test Inference
+
+```bash
+# Run inference test (uses test.png by default)
+python test_inference.py
+
+# Test with suffix for each container variant
+python test_inference.py --suffix ubuntu
+python test_inference.py --suffix rhel
+
+# Custom image and output
+python test_inference.py --image myimage.jpg --output result.png
+
+# Verbose output
+python test_inference.py --verbose
+```
+
+Test outputs are saved as `test_output_<suffix>.png` with detection bounding boxes overlaid.
 
 ## Performance Notes
 

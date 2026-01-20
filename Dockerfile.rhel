@@ -8,12 +8,15 @@ FROM registry.access.redhat.com/ubi9/ubi:latest AS converter
 WORKDIR /app
 
 # Install Python and build dependencies for model conversion
+# libxcb and mesa-libGL are required by opencv-python during ultralytics model conversion
 RUN dnf install -y \
         python3.11 \
         python3.11-pip \
         gcc \
         gcc-c++ \
         python3.11-devel \
+        libxcb \
+        mesa-libGL \
     && dnf clean all && \
     rm -rf /var/cache/dnf
 

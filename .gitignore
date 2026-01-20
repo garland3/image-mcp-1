@@ -1,1 +1,4 @@
 temp
+
+# Test output images with detection overlays
+test_output*.png
