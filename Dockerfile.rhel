@@ -68,9 +68,9 @@ WORKDIR /app
 RUN groupadd -r mcpuser && useradd -r -g mcpuser mcpuser
 
 # Install only runtime dependencies (no build tools, no torch, no cuda)
-RUN microdnf install -y --allowerasing \
+# Note: curl-minimal is pre-installed and works for health checks
+RUN microdnf install -y \
         python3.11 \
-        curl \
         mesa-libGL \
         glib2 \
     && microdnf clean all && \
