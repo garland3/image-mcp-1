@@ -68,7 +68,7 @@ WORKDIR /app
 RUN groupadd -r mcpuser && useradd -r -g mcpuser mcpuser
 
 # Install only runtime dependencies (no build tools, no torch, no cuda)
-RUN microdnf install -y \
+RUN microdnf install -y --allowerasing \
         python3.11 \
         curl \
         mesa-libGL \

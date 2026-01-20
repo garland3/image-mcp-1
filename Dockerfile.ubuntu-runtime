@@ -1,0 +1,66 @@
+# Ubuntu-based Dockerfile for OpenVINO Object Detection MCP Server
+# This variant performs model conversion at runtime (first startup) instead of build time.
+# Mount a volume at /app/models to persist converted models across container restarts.
+#
+# Usage:
+#   docker build -f Dockerfile.ubuntu-runtime -t openvino-detection:ubuntu-runtime .
+#   docker run -d -p 8006:8006 -v openvino-models:/app/models openvino-detection:ubuntu-runtime
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /app
+
+# Create non-root user
+RUN groupadd -r mcpuser && useradd -r -g mcpuser mcpuser
+
+# Install Python and dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        python3-venv \
+        curl \
+        ca-certificates \
+        libgl1 \
+        libglib2.0-0 \
+        libgomp1 \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python3 -m venv /app/venv
+
+# Set up Python environment
+ENV VIRTUAL_ENV=/app/venv
+ENV PATH="/app/venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+ENV OPENVINO_MODEL_PATH=/app/models
+
+# Install all dependencies (runtime + build for conversion)
+COPY requirements.txt requirements-build.txt ./
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-build.txt
+
+# Copy application files
+COPY main.py convert_models.py entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
+# Create model directory and set ownership
+RUN mkdir -p /app/models && \
+    chown -R mcpuser:mcpuser /app
+
+# Switch to non-root user
+USER mcpuser
+
+# Expose the MCP server port
+EXPOSE 8006
+
+# Health check (longer start period for model conversion)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
+    CMD curl -f http://localhost:8006/mcp || exit 1
+
+# Use entrypoint for model conversion
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["--host", "0.0.0.0", "--port", "8006"]
